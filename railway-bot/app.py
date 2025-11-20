@@ -348,19 +348,15 @@ def build_complete_webhook():
         notification_text = (
             f"✅ <b>Сборка завершена!</b>\n\n"
             f"📦 <b>Версия:</b> {version}\n"
-            f"💾 <b>Размер:</b> {size}\n"
-            f"🔹 <b>Commit:</b> <code>{commit}</code>\n\n"
-            f"🔗 <a href=\"{data.get('url', '')}\">Скачать релиз</a>\n\n"
+            f"💾 <b>Размер:</b> {size}\n\n"
             f"🔄 Роутер автоматически обновится при следующей проверке"
         )
     else:
         error = data.get('error', 'Unknown error')
         notification_text = (
-            f"❌ <b>Сборка не удалась!</b>\n\n"
+            f"❌ <b>Сборка geosite не удалась!</b>\n\n"
             f"📦 <b>Версия:</b> {version}\n"
-            f"🔹 <b>Commit:</b> <code>{commit}</code>\n"
-            f"❗ <b>Ошибка:</b> {error}\n\n"
-            f"Проверьте логи GitHub Actions"
+            f"❗ <b>Ошибка:</b> {error}"
         )
     
     send_telegram_message(notification_text)
