@@ -1,5 +1,5 @@
 """
-Custom Geosite Bot - Main Application
+OpenWRTrouter Bot - Main Application
 Railway Flask App with Telegram Bot Integration
 """
 from flask import Flask, request, jsonify
@@ -125,7 +125,7 @@ def index():
     """Main page"""
     return jsonify({
         'status': 'online',
-        'service': 'Custom Geosite Bot',
+        'service': 'OpenWRTrouter Bot',
         'version': '1.0.0',
         'endpoints': {
             'health': '/health',
@@ -1042,7 +1042,7 @@ def telegram_webhook():
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    logger.info("Starting Custom Geosite Bot...")
+    logger.info("Starting OpenWRTrouter Bot...")
     logger.info(f"Bot Token configured: {bool(config.TELEGRAM_BOT_TOKEN)}")
     logger.info(f"GitHub configured: {bool(config.GITHUB_TOKEN)}")
     logger.info(f"Webhook secret configured: {bool(config.WEBHOOK_SECRET)}")
