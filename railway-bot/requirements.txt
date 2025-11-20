@@ -1,0 +1,20 @@
+# Web Framework
+flask==3.0.0
+
+# Telegram Bot
+python-telegram-bot==20.7
+
+# HTTP Requests
+requests==2.31.0
+
+# GitHub API
+PyGithub==2.1.1
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Logging
+structlog==23.2.0
+
+# WSGI Server
+gunicorn==21.2.0
