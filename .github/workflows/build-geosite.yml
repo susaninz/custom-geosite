@@ -20,13 +20,18 @@ on:
       - main
     paths:
       - '.github/workflows/build-geosite.yml'
-      - 'geosite-builder/**'
+      - 'custom-data/**'
 
 env:
   # Категории для включения в geosite.dat
-  # cn намеренно исключена - она огромная (~3500-6000 доменов, 250+ зависимостей)
-  # Warning от OpenClash о "list cn not found" - не критичен, все правила работают
+  # 
+  # cn - минимальная заглушка (1 домен) для совместимости с Mihomo
+  # Mihomo проверяет наличие категории "cn" при загрузке geosite.dat
+  # Без неё файл считается invalid и удаляется
+  # См: https://github.com/MetaCubeX/mihomo/blob/Alpha/component/geodata/utils.go#L55
+  #
   GEOSITE_CATEGORIES: >-
+    cn
     category-ads-all
     instagram
     facebook
@@ -101,6 +106,19 @@ jobs:
           cd domain-list-community
           echo "Repository size:"
           du -sh .
+      
+      - name: 🔧 Apply custom cn stub
+        if: steps.check_updates.outputs.should_build == 'true'
+        run: |
+          echo "Applying custom cn stub for Mihomo compatibility..."
+          
+          # Заменяем оригинальный cn (который include:tld-cn + geolocation-cn = 1600+ доменов)
+          # на нашу минимальную заглушку (1 домен)
+          cp custom-data/cn domain-list-community/data/cn
+          
+          echo "✓ Custom cn stub applied"
+          echo "Content:"
+          cat domain-list-community/data/cn
       
       - name: ✂️ Extract dependencies
         if: steps.check_updates.outputs.should_build == 'true'
@@ -207,6 +225,12 @@ jobs:
           
           $(echo "${{ env.GEOSITE_CATEGORIES }}" | tr ' ' '\n' | sed 's/^/- /')
           
+          ## ⚠️ Note about "cn" category
+          
+          The "cn" category is a **minimal stub** (1 placeholder domain) for Mihomo compatibility.
+          Mihomo validates geosite.dat by checking if "cn" exists. Without it, the file is deleted.
+          This stub does NOT include real Chinese domains to save router RAM.
+          
           ## 🚀 How to Use
           
           ### OpenClash
@@ -293,4 +317,3 @@ jobs:
           echo "No changes detected in domain-list-community since last release." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "To force a build, run workflow manually with 'force_build' enabled." >> $GITHUB_STEP_SUMMARY
-

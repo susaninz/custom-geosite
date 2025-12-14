@@ -1,0 +1,13 @@
+# Minimal "cn" stub for Mihomo compatibility
+# 
+# Mihomo/Clash.Meta validates geosite.dat by checking if category "cn" exists.
+# If "cn" is missing, it considers the file invalid and re-downloads it.
+# 
+# This stub provides a minimal "cn" category with one placeholder domain
+# to pass validation WITHOUT adding thousands of real Chinese domains.
+# 
+# This saves ~150KB+ in geosite.dat size and significant RAM on routers.
+# 
+# See: https://github.com/MetaCubeX/mihomo/blob/Alpha/component/geodata/utils.go#L55
+
+mihomo-cn-stub.invalid
