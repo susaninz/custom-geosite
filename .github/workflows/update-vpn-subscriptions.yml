@@ -1,0 +1,394 @@
+name: Update VPN Subscriptions
+
+# Когда запускать
+on:
+  # Каждый день в 04:00 UTC (07:00 МСК)
+  schedule:
+    - cron: '0 4 * * *'
+  
+  # Вручную через GitHub UI
+  workflow_dispatch:
+    inputs:
+      router:
+        description: 'Router to update (skazka/ivan/all)'
+        required: false
+        default: 'skazka'
+
+env:
+  # Подписки (не секретные — просто URLs)
+  X8_SUB_URL: "https://connect.x8net.world/X8/WDg0ODQ2OCwxNzU3Njk5MDk28Nk0BeXa_x"
+  SIRIUS_SUB_URL: "https://s.creati.win/sub/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzaXJpdXN2cG5fNzM5ODEzXzEifQ.qR2TNxDnze-wvDHoc9flc2zfJHEhGTGMGXSRB8wXtnk"
+  
+  # ZeroTier
+  ZEROTIER_NETWORK: "f3797ba7a8ddf76b"
+  
+  # Роутеры (ZeroTier IPs)
+  SKAZKA_IP: "10.59.145.62"
+  # IVAN_IP: "10.59.x.x"  # Добавить после настройки ZeroTier на Иване
+
+jobs:
+  update-subscriptions:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: 🔧 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: 🌐 Install and Join ZeroTier
+        env:
+          ZEROTIER_API_TOKEN: ${{ secrets.ZEROTIER_API_TOKEN }}
+        run: |
+          # Install ZeroTier
+          curl -s https://install.zerotier.com | sudo bash
+          
+          # Get Node ID before joining
+          NODE_ID=$(sudo zerotier-cli info | awk '{print $3}')
+          echo "Node ID: $NODE_ID"
+          
+          # Join network
+          sudo zerotier-cli join ${{ env.ZEROTIER_NETWORK }}
+          
+          # Auto-authorize via ZeroTier API
+          if [ -n "$ZEROTIER_API_TOKEN" ]; then
+            echo "Authorizing node via API..."
+            curl -s -X POST \
+              "https://api.zerotier.com/api/v1/network/${{ env.ZEROTIER_NETWORK }}/member/${NODE_ID}" \
+              -H "Authorization: token ${ZEROTIER_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d '{"config": {"authorized": true}, "name": "GitHub Actions Runner"}'
+          fi
+          
+          # Wait for connection
+          echo "Waiting for ZeroTier connection..."
+          for i in {1..30}; do
+            if sudo zerotier-cli listnetworks | grep -q "OK"; then
+              echo "Connected!"
+              break
+            fi
+            sleep 2
+          done
+          
+          sudo zerotier-cli listnetworks
+      
+      - name: 📥 Download subscriptions
+        id: download
+        run: |
+          echo "Downloading X8..."
+          curl -sL -H "User-Agent: v2rayNG" "${{ env.X8_SUB_URL }}" | base64 -d > /tmp/x8.txt
+          X8_COUNT=$(grep -c "^vless://" /tmp/x8.txt || echo 0)
+          echo "X8 servers: $X8_COUNT"
+          echo "x8_count=$X8_COUNT" >> $GITHUB_OUTPUT
+          
+          echo "Downloading Sirius..."
+          curl -sL "${{ env.SIRIUS_SUB_URL }}" | base64 -d > /tmp/sirius.txt
+          SIRIUS_COUNT=$(grep -c "^vless://" /tmp/sirius.txt || echo 0)
+          echo "Sirius servers: $SIRIUS_COUNT"
+          echo "sirius_count=$SIRIUS_COUNT" >> $GITHUB_OUTPUT
+          
+          if [ "$X8_COUNT" -eq 0 ] || [ "$SIRIUS_COUNT" -eq 0 ]; then
+            echo "Error: No servers found!"
+            exit 1
+          fi
+      
+      - name: 🔨 Generate OpenClash config
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import urllib.parse
+          import re
+          import sys
+
+          def parse_vless_url(url, provider_prefix):
+              url = url.strip()
+              if not url.startswith('vless://'):
+                  return None, None
+              
+              if '#' in url:
+                  raw_name = urllib.parse.unquote(url.split('#')[1])
+                  name = f"[{provider_prefix}] {raw_name}"
+              else:
+                  return None, None
+              
+              url_part = url.split('#')[0]
+              
+              match = re.match(r'vless://([^@]+)@([^:]+):(\d+)', url_part)
+              if not match:
+                  return None, None
+              
+              uuid = match.group(1)
+              host = match.group(2)
+              port = match.group(3)
+              
+              if '?' in url_part:
+                  query = url_part.split('?')[1]
+                  params = {}
+                  for p in query.split('&'):
+                      if '=' in p:
+                          k, v = p.split('=', 1)
+                          params[k] = urllib.parse.unquote(v)
+              else:
+                  params = {}
+              
+              sni = params.get('sni', host)
+              pbk = params.get('pbk', '')
+              sid = params.get('sid', '')
+              flow = params.get('flow', '')
+              fp = params.get('fp', 'chrome')
+              
+              yaml = f'''- name: "{name}"
+            type: vless
+            server: {host}
+            port: {port}
+            network: tcp
+            udp: true
+            tls: true
+            servername: {sni}
+            reality-opts:
+              public-key: {pbk}
+              short-id: "{sid}"
+            client-fingerprint: {fp}
+            uuid: {uuid}
+            packet-encoding: xudp'''
+              
+              if flow:
+                  yaml += f'\n  flow: {flow}'
+              
+              return name, yaml
+
+          # Parse subscriptions
+          x8_servers = []
+          sirius_servers = []
+
+          with open('/tmp/x8.txt', 'r') as f:
+              for line in f:
+                  if line.startswith('vless://'):
+                      name, yaml = parse_vless_url(line, 'X8')
+                      if yaml:
+                          x8_servers.append((name, yaml))
+
+          with open('/tmp/sirius.txt', 'r') as f:
+              for line in f:
+                  if line.startswith('vless://'):
+                      name, yaml = parse_vless_url(line, 'Sirius')
+                      if yaml:
+                          sirius_servers.append((name, yaml))
+
+          # Find YouTube server
+          youtube_server = None
+          for name, yaml in sirius_servers:
+              if 'YouTube' in name or 'youtube' in name.lower():
+                  youtube_server = name
+                  break
+
+          # Generate config
+          with open('/tmp/config.yaml', 'w') as f:
+              f.write('''---
+          mixed-port: 7893
+          socks-port: 7891
+          redir-port: 7892
+          allow-lan: true
+          mode: rule
+          log-level: info
+          external-controller: 0.0.0.0:9090
+          dns:
+            enable: true
+            use-hosts: true
+            fake-ip-range: 198.18.0.1/16
+            default-nameserver:
+            - 1.1.1.1
+            - 8.8.8.8
+            nameserver:
+            - 1.1.1.1
+            - 8.8.8.8
+            ipv6: false
+            enhanced-mode: fake-ip
+            listen: 0.0.0.0:7874
+
+          proxies:
+          # ============ X8 PROXIES ============
+          ''')
+              
+              for name, yaml in x8_servers:
+                  f.write(yaml + '\n\n')
+              
+              f.write('# ============ SIRIUS VPN PROXIES ============\n')
+              for name, yaml in sirius_servers:
+                  f.write(yaml + '\n\n')
+              
+              f.write('''proxy-groups:
+          - name: "X8 Provider"
+            type: url-test
+            url: http://www.gstatic.com/generate_204
+            interval: 60
+            timeout: 3000
+            tolerance: 50
+            proxies:
+          ''')
+              for name, _ in x8_servers:
+                  f.write(f'  - "{name}"\n')
+              
+              f.write('''
+          - name: "Sirius Provider"
+            type: url-test
+            url: http://www.gstatic.com/generate_204
+            interval: 60
+            timeout: 3000
+            tolerance: 50
+            proxies:
+          ''')
+              for name, _ in sirius_servers:
+                  f.write(f'  - "{name}"\n')
+              
+              f.write('''
+          - name: "Proxy"
+            type: fallback
+            url: http://www.gstatic.com/generate_204
+            interval: 30
+            timeout: 5000
+            proxies:
+            - "X8 Provider"
+            - "Sirius Provider"
+
+          - name: "YouTube"
+            type: fallback
+            url: http://www.gstatic.com/generate_204
+            interval: 60
+            timeout: 3000
+            proxies:
+          ''')
+              if youtube_server:
+                  f.write(f'  - "{youtube_server}"\n')
+              f.write('  - "X8 Provider"\n')
+              f.write('  - "Sirius Provider"\n')
+              
+              f.write('''
+          rules:
+          - IP-CIDR,192.168.0.0/24,DIRECT
+          - IP-CIDR,192.168.1.0/24,DIRECT
+          - IP-CIDR,10.0.0.0/8,DIRECT
+          - DOMAIN-SUFFIX,youtube.com,YouTube
+          - DOMAIN-SUFFIX,youtu.be,YouTube
+          - DOMAIN-SUFFIX,googlevideo.com,YouTube
+          - DOMAIN-SUFFIX,ytimg.com,YouTube
+          - DOMAIN-SUFFIX,ggpht.com,YouTube
+          - DOMAIN-SUFFIX,instagram.com,Proxy
+          - DOMAIN-SUFFIX,cdninstagram.com,Proxy
+          - DOMAIN-SUFFIX,facebook.com,Proxy
+          - DOMAIN-SUFFIX,fbcdn.net,Proxy
+          - DOMAIN-SUFFIX,twitter.com,Proxy
+          - DOMAIN-SUFFIX,x.com,Proxy
+          - DOMAIN-SUFFIX,twimg.com,Proxy
+          - DOMAIN-SUFFIX,netflix.com,Proxy
+          - DOMAIN-SUFFIX,nflxvideo.net,Proxy
+          - DOMAIN-SUFFIX,openai.com,Proxy
+          - DOMAIN-SUFFIX,chatgpt.com,Proxy
+          - DOMAIN-SUFFIX,claude.ai,Proxy
+          - DOMAIN-SUFFIX,anthropic.com,Proxy
+          - DOMAIN-SUFFIX,cursor.sh,Proxy
+          - DOMAIN-SUFFIX,perplexity.ai,Proxy
+          - DOMAIN-SUFFIX,kinopub.me,Proxy
+          - DOMAIN-SUFFIX,kpdl.cc,Proxy
+          - MATCH,DIRECT
+
+          tproxy-port: 7895
+          port: 7890
+          secret: w5wwCH2N
+          bind-address: "*"
+          keep-alive-interval: 15
+          ipv6: false
+          profile:
+            store-selected: true
+          authentication:
+          - Clash:PwUbpLZE
+          ''')
+
+          print(f"Generated config: X8={len(x8_servers)}, Sirius={len(sirius_servers)}")
+          if youtube_server:
+              print(f"YouTube server: {youtube_server}")
+          PYTHON_SCRIPT
+          
+          echo "Config generated:"
+          head -20 /tmp/config.yaml
+      
+      - name: 🔐 Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ROUTER_SSH_KEY }}" > ~/.ssh/router_key
+          chmod 600 ~/.ssh/router_key
+          
+          # Add router to known hosts (skip verification for ZeroTier IPs)
+          echo "StrictHostKeyChecking no" > ~/.ssh/config
+      
+      - name: 📤 Deploy to Skazka
+        if: github.event.inputs.router != 'ivan'
+        run: |
+          ROUTER_IP="${{ env.SKAZKA_IP }}"
+          
+          echo "Checking connectivity to $ROUTER_IP..."
+          if ! ping -c 3 -W 5 "$ROUTER_IP"; then
+            echo "Router not reachable via ZeroTier"
+            echo "ZeroTier networks:"
+            sudo zerotier-cli listnetworks
+            exit 1
+          fi
+          
+          echo "Creating backup..."
+          ssh -i ~/.ssh/router_key root@$ROUTER_IP \
+            "cp /etc/openclash/config/Skazka.yaml /etc/openclash/backup/Skazka_\$(date +%Y%m%d_%H%M%S).yaml 2>/dev/null || true"
+          
+          echo "Uploading config..."
+          scp -i ~/.ssh/router_key /tmp/config.yaml root@$ROUTER_IP:/etc/openclash/config/Skazka.yaml
+          
+          echo "Restarting OpenClash..."
+          ssh -i ~/.ssh/router_key root@$ROUTER_IP "/etc/init.d/openclash restart"
+          
+          sleep 10
+          
+          echo "Checking status..."
+          STATUS=$(ssh -i ~/.ssh/router_key root@$ROUTER_IP "/etc/init.d/openclash status")
+          echo "Status: $STATUS"
+          
+          if [[ "$STATUS" != *"running"* ]]; then
+            echo "OpenClash failed to start!"
+            exit 1
+          fi
+          
+          echo "✅ Skazka updated successfully!"
+      
+      - name: 📱 Notify Telegram (Success)
+        if: success()
+        run: |
+          curl -X POST "${{ secrets.RAILWAY_WEBHOOK_URL }}/webhook/vpn-update" \
+            -H "Authorization: Bearer ${{ secrets.WEBHOOK_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "status": "success",
+              "router": "${{ github.event.inputs.router || 'skazka' }}",
+              "x8_servers": "${{ steps.download.outputs.x8_count }}",
+              "sirius_servers": "${{ steps.download.outputs.sirius_count }}"
+            }' || true
+      
+      - name: 📱 Notify Telegram (Failure)
+        if: failure()
+        run: |
+          curl -X POST "${{ secrets.RAILWAY_WEBHOOK_URL }}/webhook/vpn-update" \
+            -H "Authorization: Bearer ${{ secrets.WEBHOOK_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "status": "failed",
+              "router": "${{ github.event.inputs.router || 'skazka' }}",
+              "error": "Check GitHub Actions logs"
+            }' || true
+      
+      - name: ✅ Summary
+        run: |
+          echo "### 🔄 VPN Subscriptions Updated!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **X8:** ${{ steps.download.outputs.x8_count }} servers" >> $GITHUB_STEP_SUMMARY
+          echo "- **Sirius:** ${{ steps.download.outputs.sirius_count }} servers" >> $GITHUB_STEP_SUMMARY
+          echo "- **Router:** ${{ github.event.inputs.router || 'skazka' }}" >> $GITHUB_STEP_SUMMARY
+
