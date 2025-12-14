@@ -9,11 +9,17 @@ env:
   X8_SUB_URL: "https://connect.x8net.world/X8/WDg0ODQ2OCwxNzU3Njk5MDk28Nk0BeXa_x"
   SIRIUS_SUB_URL: "https://s.creati.win/sub/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzaXJpdXN2cG5fNzM5ODEzXzEifQ.qR2TNxDnze-wvDHoc9flc2zfJHEhGTGMGXSRB8wXtnk"
 
+permissions:
+  contents: write
+
 jobs:
   build-config:
     runs-on: ubuntu-latest
     
     steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+      
       - name: 📥 Download subscriptions
         id: download
         run: |
