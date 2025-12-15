@@ -111,24 +111,28 @@ jobs:
               f.write('  - "X8 Provider"\n  - "Sirius Provider"\n')
               f.write('''
           rules:
+          # Local networks
           - IP-CIDR,192.168.0.0/16,DIRECT
           - IP-CIDR,10.0.0.0/8,DIRECT
-          - DOMAIN-SUFFIX,youtube.com,YouTube
-          - DOMAIN-SUFFIX,youtu.be,YouTube
-          - DOMAIN-SUFFIX,googlevideo.com,YouTube
-          - DOMAIN-SUFFIX,ytimg.com,YouTube
-          - DOMAIN-SUFFIX,instagram.com,Proxy
-          - DOMAIN-SUFFIX,cdninstagram.com,Proxy
-          - DOMAIN-SUFFIX,facebook.com,Proxy
-          - DOMAIN-SUFFIX,twitter.com,Proxy
-          - DOMAIN-SUFFIX,x.com,Proxy
-          - DOMAIN-SUFFIX,netflix.com,Proxy
-          - DOMAIN-SUFFIX,openai.com,Proxy
-          - DOMAIN-SUFFIX,chatgpt.com,Proxy
-          - DOMAIN-SUFFIX,claude.ai,Proxy
-          - DOMAIN-SUFFIX,anthropic.com,Proxy
-          - DOMAIN-SUFFIX,cursor.sh,Proxy
-          - DOMAIN-SUFFIX,kinopub.me,Proxy
+
+          # === GEOSITE rules (from custom geosite.dat) ===
+          - GEOSITE,youtube,YouTube
+          - GEOSITE,instagram,Proxy
+          - GEOSITE,facebook,Proxy
+          - GEOSITE,twitter,Proxy
+          - GEOSITE,netflix,Proxy
+          - GEOSITE,soundcloud,Proxy
+          - GEOSITE,kinopub,Proxy
+          - GEOSITE,category-ai-!cn,Proxy
+
+          # === DOMAIN-SUFFIX (no category in geosite) ===
+          - DOMAIN-SUFFIX,speedtest.net,Proxy
+          - DOMAIN-SUFFIX,rutracker.org,Proxy
+          - DOMAIN-SUFFIX,t-ru.org,Proxy
+          - DOMAIN-SUFFIX,lol,Proxy
+          - DOMAIN-SUFFIX,cdn32.lol,Proxy
+
+          # Default
           - MATCH,DIRECT
           ''')
           print(f"Config: X8={len(x8)}, Sirius={len(sirius)}, YouTube={yt}")
