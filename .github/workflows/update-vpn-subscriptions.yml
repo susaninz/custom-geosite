@@ -67,11 +67,14 @@ jobs:
                   yaml += f'\n  flow: {flow}'
               return name, yaml
 
-          x8 = [parse_vless(l, 'X8') for l in open('/tmp/x8.txt') if l.startswith('vless://')]
-          x8 = [(n,y) for n,y in x8 if y]
+          x8_all = [parse_vless(l, 'X8') for l in open('/tmp/x8.txt') if l.startswith('vless://')]
+          x8_all = [(n,y) for n,y in x8_all if y]
+          # Exclude Russia from X8 (blocked services don't work there)
+          x8 = [(n,y) for n,y in x8_all if 'Russia' not in n and '🇷🇺' not in n]
           sirius = [parse_vless(l, 'Sirius') for l in open('/tmp/sirius.txt') if l.startswith('vless://')]
           sirius = [(n,y) for n,y in sirius if y]
           yt = next((n for n,_ in sirius if 'YouTube' in n or 'youtube' in n.lower()), None)
+          print(f"X8: {len(x8_all)} total, {len(x8)} without Russia")
 
           with open('/tmp/openclash-config.yaml', 'w') as f:
               f.write(f'''mixed-port: 7893
@@ -105,7 +108,7 @@ jobs:
             interval: 30
             timeout: 5000
             lazy: false
-            proxies: ["X8 Provider", "Sirius Provider"]
+            proxies: ["Sirius Provider", "X8 Provider"]
 
           - name: "YouTube"
             type: fallback
@@ -116,7 +119,7 @@ jobs:
             proxies:
           ''')
               if yt: f.write(f'  - "{yt}"\n')
-              f.write('  - "X8 Provider"\n  - "Sirius Provider"\n')
+              f.write('  - "Sirius Provider"\n  - "X8 Provider"\n')
               f.write('''
           rules:
           # Local networks
