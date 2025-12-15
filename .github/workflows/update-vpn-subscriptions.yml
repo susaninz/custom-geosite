@@ -48,7 +48,8 @@ jobs:
               m = re.match(r'vless://([^@]+)@([^:]+):(\d+)', url.split('#')[0])
               if not m: return None, None
               params = dict(p.split('=',1) for p in url.split('?')[1].split('#')[0].split('&') if '=' in p) if '?' in url else {}
-              return name, f'''- name: "{name}"
+              flow = params.get('flow', '')
+              yaml = f'''- name: "{name}"
             type: vless
             server: {m[2]}
             port: {m[3]}
@@ -62,6 +63,9 @@ jobs:
               short-id: "{params.get('sid', '')}"
             client-fingerprint: {params.get('fp', 'chrome')}
             packet-encoding: xudp'''
+              if flow:
+                  yaml += f'\n  flow: {flow}'
+              return name, yaml
 
           x8 = [parse_vless(l, 'X8') for l in open('/tmp/x8.txt') if l.startswith('vless://')]
           x8 = [(n,y) for n,y in x8 if y]
