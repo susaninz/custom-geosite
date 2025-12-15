@@ -99,12 +99,16 @@ jobs:
             type: fallback
             url: http://www.gstatic.com/generate_204
             interval: 30
+            timeout: 5000
+            lazy: false
             proxies: ["X8 Provider", "Sirius Provider"]
 
           - name: "YouTube"
             type: fallback
             url: http://www.gstatic.com/generate_204
-            interval: 60
+            interval: 30
+            timeout: 5000
+            lazy: false
             proxies:
           ''')
               if yt: f.write(f'  - "{yt}"\n')
