@@ -74,7 +74,8 @@ jobs:
           sirius = [parse_vless(l, 'Sirius') for l in open('/tmp/sirius.txt') if l.startswith('vless://')]
           sirius = [(n,y) for n,y in sirius if y]
           yt = next((n for n,_ in sirius if 'YouTube' in n or 'youtube' in n.lower()), None)
-          print(f"X8: {len(x8_all)} total, {len(x8)} without Russia")
+          wa = next((n for n,_ in sirius if 'WhatsApp' in n or 'whatsapp' in n.lower()), None)
+          print(f"X8: {len(x8_all)} total, {len(x8)} without Russia, WhatsApp server: {wa}")
 
           with open('/tmp/openclash-config.yaml', 'w') as f:
               f.write(f'''mixed-port: 7893
@@ -121,6 +122,17 @@ jobs:
               if yt: f.write(f'  - "{yt}"\n')
               f.write('  - "Sirius Provider"\n  - "X8 Provider"\n')
               f.write('''
+          - name: "Messengers"
+            type: fallback
+            url: http://www.gstatic.com/generate_204
+            interval: 30
+            timeout: 5000
+            lazy: false
+            proxies:
+          ''')
+              if wa: f.write(f'  - "{wa}"\n')
+              f.write('  - "Sirius Provider"\n  - "X8 Provider"\n')
+              f.write('''
           rules:
           # Local networks
           - IP-CIDR,192.168.0.0/16,DIRECT
@@ -128,6 +140,8 @@ jobs:
 
           # === GEOSITE rules (from custom geosite.dat) ===
           - GEOSITE,youtube,YouTube
+          - GEOSITE,telegram,Messengers
+          - GEOSITE,whatsapp,Messengers
           - GEOSITE,instagram,Proxy
           - GEOSITE,facebook,Proxy
           - GEOSITE,twitter,Proxy
