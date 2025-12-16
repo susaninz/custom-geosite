@@ -97,9 +97,9 @@ jobs:
               for _,y in x8: f.write(y + '\n\n')
               for _,y in sirius: f.write(y + '\n\n')
               
-              f.write('proxy-groups:\n- name: "X8 Provider"\n  type: url-test\n  url: http://www.gstatic.com/generate_204\n  interval: 60\n  timeout: 3000\n  proxies:\n')
+              f.write('proxy-groups:\n- name: "X8 Provider"\n  type: url-test\n  url: http://www.gstatic.com/generate_204\n  interval: 60\n  timeout: 3000\n  tolerance: 100\n  proxies:\n')
               for n,_ in x8: f.write(f'  - "{n}"\n')
-              f.write('\n- name: "Sirius Provider"\n  type: url-test\n  url: http://www.gstatic.com/generate_204\n  interval: 60\n  timeout: 3000\n  proxies:\n')
+              f.write('\n- name: "Sirius Provider"\n  type: url-test\n  url: http://www.gstatic.com/generate_204\n  interval: 60\n  timeout: 3000\n  tolerance: 100\n  proxies:\n')
               for n,_ in sirius: f.write(f'  - "{n}"\n')
               f.write('''
           - name: "Proxy"
