@@ -42,6 +42,8 @@ env:
     kinopub
     category-ai-!cn
     category-gov-ru
+    telegram
+    whatsapp
 
 jobs:
   check-and-build:
