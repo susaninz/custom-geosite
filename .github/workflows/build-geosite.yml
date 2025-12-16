@@ -66,7 +66,8 @@ jobs:
           
           # Получаем последний GEOSITE релиз (теги v*.*.*)
           # Важно: не использовать /releases/latest, т.к. он вернёт vpn-config релиз
-          LAST_RELEASE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '[.[] | select(.tag_name | startswith("v"))][0].tag_name // empty')
+          # Фильтруем по regex v\d+.\d+ чтобы исключить vpn-config-X
+          LAST_RELEASE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '[.[] | select(.tag_name | test("^v\\d+\\.\\d+"))][0].tag_name // empty')
           
           if [ -z "$LAST_RELEASE" ]; then
             echo "No previous releases found, building first version"
