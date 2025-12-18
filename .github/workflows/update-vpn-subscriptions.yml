@@ -37,7 +37,7 @@ jobs:
       
       - name: 🔨 Generate config
         run: |
-          python3 << 'EOF'
+          python3 << 'PYEOF'
           import urllib.parse, re
 
           def parse_vless(url, prefix):
@@ -140,8 +140,6 @@ jobs:
 
           # === GEOSITE rules (from custom geosite.dat) ===
           - GEOSITE,youtube,YouTube
-          - GEOSITE,telegram,Messengers
-          - GEOSITE,whatsapp,Messengers
           - GEOSITE,instagram,Proxy
           - GEOSITE,facebook,Proxy
           - GEOSITE,twitter,Proxy
@@ -149,6 +147,24 @@ jobs:
           - GEOSITE,soundcloud,Proxy
           - GEOSITE,kinopub,Proxy
           - GEOSITE,category-ai-!cn,Proxy
+
+          # === Telegram & WhatsApp (IP-CIDR + domains, no geosite yet) ===
+          # Telegram IP ranges
+          - IP-CIDR,91.108.0.0/16,Messengers
+          - IP-CIDR,149.154.160.0/20,Messengers
+          - IP-CIDR,5.28.192.0/18,Messengers
+          # Telegram domains
+          - DOMAIN-SUFFIX,telegram.org,Messengers
+          - DOMAIN-SUFFIX,t.me,Messengers
+          - DOMAIN-SUFFIX,telegram.me,Messengers
+          - DOMAIN-SUFFIX,telesco.pe,Messengers
+          # WhatsApp IP ranges
+          - IP-CIDR,157.240.0.0/16,Messengers
+          - IP-CIDR,31.13.24.0/21,Messengers
+          - IP-CIDR,31.13.64.0/18,Messengers
+          # WhatsApp domains
+          - DOMAIN-SUFFIX,whatsapp.com,Messengers
+          - DOMAIN-SUFFIX,whatsapp.net,Messengers
 
           # === DOMAIN-SUFFIX (no category in geosite) ===
           - DOMAIN-SUFFIX,speedtest.net,Proxy
@@ -161,7 +177,7 @@ jobs:
           - MATCH,DIRECT
           ''')
           print(f"Config: X8={len(x8)}, Sirius={len(sirius)}, YouTube={yt}")
-          EOF
+          PYEOF
       
       - name: 📦 Create Release
         uses: softprops/action-gh-release@v1
