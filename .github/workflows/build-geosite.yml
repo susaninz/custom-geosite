@@ -146,7 +146,8 @@ jobs:
           for pass in 1 2 3; do
             while IFS= read -r file; do
               if [ -f "data/$file" ]; then
-                grep "^include:" "data/$file" 2>/dev/null | sed 's/include://' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' >> $NEEDED_FILES
+                # Убираем атрибуты (@ads, @cn и т.д.) из имени файла
+                grep "^include:" "data/$file" 2>/dev/null | sed 's/include://' | sed 's/ @.*$//' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' >> $NEEDED_FILES
               fi
             done < $NEEDED_FILES
             sort -u $NEEDED_FILES -o $NEEDED_FILES
