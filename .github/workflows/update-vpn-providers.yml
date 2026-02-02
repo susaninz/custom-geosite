@@ -1,0 +1,132 @@
+name: Update VPN Proxy Providers
+
+# Конвертирует VPN-подписки (base64 VLESS) → Clash YAML proxy-provider файлы
+# Публикует в GitHub Releases как sirius-providers.yaml и x8-providers.yaml
+
+on:
+  # Каждый день в 04:00 UTC (07:00 MSK) — после build-geosite (03:00 UTC)
+  schedule:
+    - cron: '0 4 * * *'
+
+  # Вручную через GitHub UI
+  workflow_dispatch:
+
+env:
+  RELEASE_TAG: vpn-providers-latest
+
+jobs:
+  update-providers:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 📦 Install dependencies
+        run: pip install pyyaml
+
+      - name: 📥 Download & convert Sirius subscription
+        run: |
+          curl -sL --max-time 30 \
+            -H "User-Agent: clash.meta" \
+            "${{ secrets.SIRIUS_SUB_URL }}" \
+            -o /tmp/sirius_raw.txt
+
+          if [ ! -s /tmp/sirius_raw.txt ]; then
+            echo "::error::Failed to download Sirius subscription"
+            exit 1
+          fi
+
+          python3 scripts/convert_vless_to_clash.py \
+            --file /tmp/sirius_raw.txt \
+            build/sirius-providers.yaml
+
+      - name: 📥 Download & convert X8 subscription
+        run: |
+          curl -sL --max-time 30 \
+            -H "User-Agent: clash.meta" \
+            "${{ secrets.X8_SUB_URL }}" \
+            -o /tmp/x8_raw.txt
+
+          # X8 может возвращать HTML если URL протух — проверяем
+          if head -1 /tmp/x8_raw.txt | grep -q "<!DOCTYPE\|<html"; then
+            echo "::warning::X8 subscription returned HTML (URL may be expired), skipping"
+            echo "x8_skipped=true" >> $GITHUB_ENV
+          elif [ ! -s /tmp/x8_raw.txt ]; then
+            echo "::warning::Failed to download X8 subscription, skipping"
+            echo "x8_skipped=true" >> $GITHUB_ENV
+          else
+            python3 scripts/convert_vless_to_clash.py \
+              --file /tmp/x8_raw.txt \
+              build/x8-providers.yaml
+            echo "x8_skipped=false" >> $GITHUB_ENV
+          fi
+
+      - name: ✅ Validate output
+        run: |
+          echo "=== Sirius providers ==="
+          python3 -c "
+          import yaml
+          with open('build/sirius-providers.yaml') as f:
+              data = yaml.safe_load(f)
+          proxies = data.get('proxies', [])
+          print(f'Servers: {len(proxies)}')
+          for p in proxies:
+              print(f'  - {p[\"name\"]} ({p[\"server\"]}:{p[\"port\"]})')
+          assert len(proxies) > 0, 'No proxies found!'
+          "
+
+          if [ "$x8_skipped" != "true" ] && [ -f build/x8-providers.yaml ]; then
+            echo ""
+            echo "=== X8 providers ==="
+            python3 -c "
+          import yaml
+          with open('build/x8-providers.yaml') as f:
+              data = yaml.safe_load(f)
+          proxies = data.get('proxies', [])
+          print(f'Servers: {len(proxies)}')
+          for p in proxies:
+              print(f'  - {p[\"name\"]} ({p[\"server\"]}:{p[\"port\"]})')
+          assert len(proxies) > 0, 'No proxies found!'
+          "
+          fi
+
+      - name: 🏷️ Create/Update Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          name: VPN Proxy Providers (auto-updated)
+          body: |
+            Auto-generated Clash YAML proxy-provider files from VPN subscriptions.
+
+            **Updated:** ${{ github.event.repository.updated_at || 'now' }}
+            **Sirius:** ✅
+            **X8:** ${{ env.x8_skipped == 'true' && '⚠️ Skipped (URL expired)' || '✅' }}
+
+            Used by `proxy-providers` in OpenClash config on routers.
+          files: |
+            build/sirius-providers.yaml
+            build/x8-providers.yaml
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ✅ Summary
+        run: |
+          echo "### ✅ VPN Providers Updated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Sirius:** $(grep -c 'name:' build/sirius-providers.yaml) servers" >> $GITHUB_STEP_SUMMARY
+          if [ -f build/x8-providers.yaml ] && [ "$x8_skipped" != "true" ]; then
+            echo "- **X8:** $(grep -c 'name:' build/x8-providers.yaml) servers" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- **X8:** ⚠️ Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
