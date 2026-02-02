@@ -58,14 +58,29 @@ jobs:
             "${{ secrets.X8_SUB_URL }}" \
             -o /tmp/x8_raw.txt
 
-          # X8 может возвращать HTML если URL протух — проверяем
-          if head -1 /tmp/x8_raw.txt | grep -q "<!DOCTYPE\|<html"; then
-            echo "::warning::X8 subscription returned HTML (URL may be expired), skipping"
-            echo "x8_skipped=true" >> $GITHUB_ENV
-          elif [ ! -s /tmp/x8_raw.txt ]; then
+          if [ ! -s /tmp/x8_raw.txt ]; then
             echo "::warning::Failed to download X8 subscription, skipping"
             echo "x8_skipped=true" >> $GITHUB_ENV
+          elif head -1 /tmp/x8_raw.txt | grep -q "<!DOCTYPE\|<html"; then
+            echo "::warning::X8 subscription returned HTML (URL may be expired), skipping"
+            echo "x8_skipped=true" >> $GITHUB_ENV
+          elif head -1 /tmp/x8_raw.txt | grep -q "^mixed-port\|^port\|^proxies"; then
+            # X8 returns full Clash YAML config — extract proxies section
+            echo "X8 returned Clash YAML format, extracting proxies..."
+            python3 -c "
+          import yaml
+          with open('/tmp/x8_raw.txt') as f:
+              data = yaml.safe_load(f)
+          proxies = data.get('proxies', [])
+          if not proxies:
+              raise ValueError('No proxies found in X8 Clash config')
+          with open('build/x8-providers.yaml', 'w') as f:
+              yaml.dump({'proxies': proxies}, f, default_flow_style=False, allow_unicode=True, sort_keys=False)
+          print(f'Extracted {len(proxies)} proxies from Clash YAML')
+          "
+            echo "x8_skipped=false" >> $GITHUB_ENV
           else
+            # Try base64 decode
             python3 scripts/convert_vless_to_clash.py \
               --file /tmp/x8_raw.txt \
               build/x8-providers.yaml
