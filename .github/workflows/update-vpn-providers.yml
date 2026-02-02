@@ -31,7 +31,9 @@ jobs:
           python-version: '3.12'
 
       - name: 📦 Install dependencies
-        run: pip install pyyaml
+        run: |
+          pip install pyyaml
+          mkdir -p build
 
       - name: 📥 Download & convert Sirius subscription
         run: |
