@@ -189,6 +189,7 @@ jobs:
             - X8: ${{ steps.download.outputs.x8_count }} servers
             - Sirius: ${{ steps.download.outputs.sirius_count }} servers
           files: /tmp/openclash-config.yaml
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       
