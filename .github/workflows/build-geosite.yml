@@ -32,7 +32,6 @@ env:
   #
   GEOSITE_CATEGORIES: >-
     cn
-    category-ads-all
     instagram
     facebook
     twitter
@@ -41,7 +40,6 @@ env:
     soundcloud
     kinopub
     category-ai-!cn
-    category-gov-ru
     telegram
     whatsapp
 
