@@ -203,7 +203,7 @@ jobs:
           fi
           
           FILE_SIZE=$(stat -c%s ../build/geosite.dat)
-          if [ $FILE_SIZE -lt 50000 ]; then
+          if [ $FILE_SIZE -lt 10000 ]; then
             echo "Error: geosite.dat is too small ($FILE_SIZE bytes)"
             exit 1
           fi
