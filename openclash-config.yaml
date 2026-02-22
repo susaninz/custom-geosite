@@ -1,0 +1,744 @@
+mixed-port: 7893
+socks-port: 7891
+redir-port: 7892
+allow-lan: true
+mode: rule
+log-level: info
+external-controller: 0.0.0.0:9090
+dns:
+  enable: true
+  fake-ip-range: 198.18.0.1/16
+  default-nameserver: [1.1.1.1, 8.8.8.8]
+  nameserver: [1.1.1.1, 8.8.8.8]
+  enhanced-mode: fake-ip
+  listen: 0.0.0.0:7874
+
+proxies:
+- name: "[X8] 🇩🇪 Germany"
+  type: vless
+  server: de.x8lab.org
+  port: 443
+  uuid: 0a9ceac9-1ac0-4d92-8efd-632cd6608738
+  network: tcp
+  udp: true
+  tls: true
+  servername: eh.vk.com
+  reality-opts:
+    public-key: k9BuzZPnzofDcPTaa7ROHNIc9ww2jy3tLAJ04GuKvAQ
+    short-id: "c44bcdb731f12c41"
+  client-fingerprint: randomized
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[X8] 🇳🇱 Netherlands 1"
+  type: vless
+  server: nl.x8lab.org
+  port: 443
+  uuid: 0a9ceac9-1ac0-001f-8efd-632cd6608738
+  network: tcp
+  udp: true
+  tls: true
+  servername: www.kinopoisk.ru
+  reality-opts:
+    public-key: k9BuzZPnzofDcPTaa7ROHNIc9ww2jy3tLAJ04GuKvAQ
+    short-id: "669d7ae5e1611511"
+  client-fingerprint: randomized
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[X8] 🇳🇱 Netherlands 2"
+  type: vless
+  server: nl2.x8lab.org
+  port: 443
+  uuid: 0a9ceac9-1ac0-0138-8efd-632cd6608738
+  network: tcp
+  udp: true
+  tls: true
+  servername: eh.vk.com
+  reality-opts:
+    public-key: k9BuzZPnzofDcPTaa7ROHNIc9ww2jy3tLAJ04GuKvAQ
+    short-id: "cd0b563c7e0ea754"
+  client-fingerprint: randomized
+  packet-encoding: xudp
+
+- name: "[X8] 🇰🇿 Kazakhstan"
+  type: vless
+  server: kz.x8lab.org
+  port: 443
+  uuid: 0a9ceac9-1ac0-4d92-8efd-632cd6608738
+  network: tcp
+  udp: true
+  tls: true
+  servername: api.gosuslugi.ru
+  reality-opts:
+    public-key: k9BuzZPnzofDcPTaa7ROHNIc9ww2jy3tLAJ04GuKvAQ
+    short-id: "c44bcdb731f12c41"
+  client-fingerprint: randomized
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[X8] 🇮🇹 Italy"
+  type: vless
+  server: it.x8lab.org
+  port: 443
+  uuid: 0a9ceac9-1ac0-4d92-8efd-632cd6608738
+  network: tcp
+  udp: true
+  tls: true
+  servername: eh.vk.com
+  reality-opts:
+    public-key: k9BuzZPnzofDcPTaa7ROHNIc9ww2jy3tLAJ04GuKvAQ
+    short-id: "c44bcdb731f12c41"
+  client-fingerprint: 
+  packet-encoding: xudp
+
+- name: "[X8] 🇧🇾 Belarus"
+  type: vless
+  server: by.x8lab.org
+  port: 443
+  uuid: 0a9ceac9-1ac0-4d92-8efd-632cd6608738
+  network: tcp
+  udp: true
+  tls: true
+  servername: storage.yandexcloud.net
+  reality-opts:
+    public-key: k9BuzZPnzofDcPTaa7ROHNIc9ww2jy3tLAJ04GuKvAQ
+    short-id: "669d7ae5e1611511"
+  client-fingerprint: randomized
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[X8] 🇺🇸 United States (USA)"
+  type: vless
+  server: us.x8lab.org
+  port: 443
+  uuid: 0a9ceac9-1ac0-4d92-8efd-632cd6608738
+  network: tcp
+  udp: true
+  tls: true
+  servername: www.kernel.org
+  reality-opts:
+    public-key: k9BuzZPnzofDcPTaa7ROHNIc9ww2jy3tLAJ04GuKvAQ
+    short-id: "cd0b563c7e0ea754"
+  client-fingerprint: randomized
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[X8] 🇹🇷 Turkey"
+  type: vless
+  server: tr.x8lab.org
+  port: 443
+  uuid: 0a9ceac9-1ac0-4d92-8efd-632cd6608738
+  network: tcp
+  udp: true
+  tls: true
+  servername: www.w3.org
+  reality-opts:
+    public-key: k9BuzZPnzofDcPTaa7ROHNIc9ww2jy3tLAJ04GuKvAQ
+    short-id: "cd0b563c7e0ea754"
+  client-fingerprint: randomized
+  packet-encoding: xudp
+
+- name: "[X8] 🇰🇷 South Korea (KR)"
+  type: vless
+  server: kr.x8lab.org
+  port: 443
+  uuid: 0a9ceac9-1ac0-4d92-8efd-632cd6608738
+  network: tcp
+  udp: true
+  tls: true
+  servername: www.w3.org
+  reality-opts:
+    public-key: k9BuzZPnzofDcPTaa7ROHNIc9ww2jy3tLAJ04GuKvAQ
+    short-id: "669d7ae5e1611511"
+  client-fingerprint: randomized
+  packet-encoding: xudp
+
+- name: "[Sirius] ✨-One-(Первый)"
+  type: vless
+  server: ru.sfasti.ru
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: ru.sfasti.ru
+  reality-opts:
+    public-key: J_jQq9-SWQZjiMhuPaFV7V2MaJ4pkKgVRaz7x6tmvy8
+    short-id: "16895459a2c7768d"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] 🟢 WhatsApp"
+  type: vless
+  server: wa.sfasti.ru
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: wa.sfasti.ru
+  reality-opts:
+    public-key: J_jQq9-SWQZjiMhuPaFV7V2MaJ4pkKgVRaz7x6tmvy8
+    short-id: "16895459a2c7768d"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Messengers💬"
+  type: vless
+  server: ndt.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: ndt.fasti.win
+  reality-opts:
+    public-key: XBBVeMURFu7jmYJ9MZwjEWgfQlGTnRs0B5So5Fy7jWs
+    short-id: "992f3294e2336744"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Torrents-Free🎬"
+  type: vless
+  server: ndt.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: ndt.fasti.win
+  reality-opts:
+    public-key: XBBVeMURFu7jmYJ9MZwjEWgfQlGTnRs0B5So5Fy7jWs
+    short-id: "992f3294e2336744"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] YouTube🍿"
+  type: vless
+  server: ru.sfasti.ru
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: ru.sfasti.ru
+  reality-opts:
+    public-key: J_jQq9-SWQZjiMhuPaFV7V2MaJ4pkKgVRaz7x6tmvy8
+    short-id: "16895459a2c7768d"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] ICEbreaker🧊"
+  type: vless
+  server: ice.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: stats.vk-portal.net
+  reality-opts:
+    public-key: XBBVeMURFu7jmYJ9MZwjEWgfQlGTnRs0B5So5Fy7jWs
+    short-id: "992f3294e2336744"
+  client-fingerprint: qq
+  packet-encoding: xudp
+
+- name: "[Sirius] Нидерланды🇳🇱"
+  type: vless
+  server: nd.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: nd.fasti.win
+  reality-opts:
+    public-key: XBBVeMURFu7jmYJ9MZwjEWgfQlGTnRs0B5So5Fy7jWs
+    short-id: "992f3294e2336744"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Германия🇩🇪"
+  type: vless
+  server: desrv.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: desrv.fasti.win
+  reality-opts:
+    public-key: THd83pRAiz68QKKNCzCdj3hvVq9Wy7NIFeIk1WjRJ1c
+    short-id: "15cdd4ff88310cf0"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Польша🇵🇱"
+  type: vless
+  server: pol.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: pl.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Финляндия🇫🇮"
+  type: vless
+  server: fi.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: fi.fasti.win
+  reality-opts:
+    public-key: F294G-iRQHISvxNNtUtF2arP3d6pzigwfVcY2jqXcSc
+    short-id: "2a8a7bb6036e8461"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Великобритания🇬🇧"
+  type: vless
+  server: gb.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: uk.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Франция🇫🇷"
+  type: vless
+  server: fr.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: fr.fasti.win
+  reality-opts:
+    public-key: CuLjZaOWwaC_didE-f8CZoUK0mGH75iq-0u1St_wjUU
+    short-id: "67f8515f3fa23d2f"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] США+🇺🇸👍"
+  type: vless
+  server: us.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: us.fasti.win
+  reality-opts:
+    public-key: I2ynp6JbtPNr4IpZoMK3iXbgBBzT4n-MKet-Ao-1RSQ
+    short-id: "ee71514cac709180"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Испания🇪🇸"
+  type: vless
+  server: es.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: es.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Roblox⟐"
+  type: vless
+  server: lv.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: stats.vk-portal.net
+  reality-opts:
+    public-key: XBBVeMURFu7jmYJ9MZwjEWgfQlGTnRs0B5So5Fy7jWs
+    short-id: "992f3294e2336744"
+  client-fingerprint: qq
+  packet-encoding: xudp
+
+- name: "[Sirius] Латвия🇱🇻"
+  type: vless
+  server: lv.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: stats.vk-portal.net
+  reality-opts:
+    public-key: XBBVeMURFu7jmYJ9MZwjEWgfQlGTnRs0B5So5Fy7jWs
+    short-id: "992f3294e2336744"
+  client-fingerprint: qq
+  packet-encoding: xudp
+
+- name: "[Sirius] Казахстан🇰🇿"
+  type: vless
+  server: kz.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: kz.fasti.win
+  reality-opts:
+    public-key: rmjxUM7tGXK1tCx9DN6LujbEflBHixsg8oTsVrdTrDM
+    short-id: "a28842ab2911096b"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] TikTok🔷"
+  type: vless
+  server: pol.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: pl.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Россия🇷🇺"
+  type: vless
+  server: rus.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: rus.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Сингапур🇸🇬"
+  type: vless
+  server: sg.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: sg.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] ОАЭ🇦🇪"
+  type: vless
+  server: ae.fasti.win
+  port: 971
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: ae.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Австралия🇦🇺"
+  type: vless
+  server: au.fasti.win
+  port: 61
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: au.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Индия🇮🇳"
+  type: vless
+  server: id.fasti.win
+  port: 91
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: id.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Турция🇹🇷"
+  type: vless
+  server: tr.fasti.win
+  port: 90
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: tr.fasti.win
+  reality-opts:
+    public-key: CL1sSD1RH6k_68fMSltXd2-GhJQ-CX02VSBryK6rjmo
+    short-id: "12393b8b177a063d"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Япония🇯🇵"
+  type: vless
+  server: jp.fasti.win
+  port: 81
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: jp.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Гонконг🇭🇰"
+  type: vless
+  server: hk.fasti.win
+  port: 852
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: hk.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Израиль🇮🇱"
+  type: vless
+  server: il.fasti.win
+  port: 972
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: il.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] Швейцария🇨🇭"
+  type: vless
+  server: ch.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: ch.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+- name: "[Sirius] AI(test)🤖"
+  type: vless
+  server: ch.fasti.win
+  port: 443
+  uuid: 60249dae-8cc7-4963-9cb9-679df6899511
+  network: tcp
+  udp: true
+  tls: true
+  servername: ch.fasti.win
+  reality-opts:
+    public-key: -YTGWg5DjsLDyaDfr1D83kiUK22LVcrK3yC53lqqigs
+    short-id: "feedbacc"
+  client-fingerprint: chrome
+  packet-encoding: xudp
+  flow: xtls-rprx-vision
+
+proxy-groups:
+- name: "X8 Provider"
+  type: url-test
+  url: http://www.gstatic.com/generate_204
+  interval: 60
+  timeout: 3000
+  tolerance: 100
+  proxies:
+  - "[X8] 🇩🇪 Germany"
+  - "[X8] 🇳🇱 Netherlands 1"
+  - "[X8] 🇳🇱 Netherlands 2"
+  - "[X8] 🇰🇿 Kazakhstan"
+  - "[X8] 🇮🇹 Italy"
+  - "[X8] 🇧🇾 Belarus"
+  - "[X8] 🇺🇸 United States (USA)"
+  - "[X8] 🇹🇷 Turkey"
+  - "[X8] 🇰🇷 South Korea (KR)"
+
+- name: "Sirius Provider"
+  type: url-test
+  url: http://www.gstatic.com/generate_204
+  interval: 60
+  timeout: 3000
+  tolerance: 100
+  proxies:
+  - "[Sirius] ✨-One-(Первый)"
+  - "[Sirius] 🟢 WhatsApp"
+  - "[Sirius] Messengers💬"
+  - "[Sirius] Torrents-Free🎬"
+  - "[Sirius] YouTube🍿"
+  - "[Sirius] ICEbreaker🧊"
+  - "[Sirius] Нидерланды🇳🇱"
+  - "[Sirius] Германия🇩🇪"
+  - "[Sirius] Польша🇵🇱"
+  - "[Sirius] Финляндия🇫🇮"
+  - "[Sirius] Великобритания🇬🇧"
+  - "[Sirius] Франция🇫🇷"
+  - "[Sirius] США+🇺🇸👍"
+  - "[Sirius] Испания🇪🇸"
+  - "[Sirius] Roblox⟐"
+  - "[Sirius] Латвия🇱🇻"
+  - "[Sirius] Казахстан🇰🇿"
+  - "[Sirius] TikTok🔷"
+  - "[Sirius] Россия🇷🇺"
+  - "[Sirius] Сингапур🇸🇬"
+  - "[Sirius] ОАЭ🇦🇪"
+  - "[Sirius] Австралия🇦🇺"
+  - "[Sirius] Индия🇮🇳"
+  - "[Sirius] Турция🇹🇷"
+  - "[Sirius] Япония🇯🇵"
+  - "[Sirius] Гонконг🇭🇰"
+  - "[Sirius] Израиль🇮🇱"
+  - "[Sirius] Швейцария🇨🇭"
+  - "[Sirius] AI(test)🤖"
+
+- name: "Proxy"
+  type: fallback
+  url: http://www.gstatic.com/generate_204
+  interval: 30
+  timeout: 5000
+  lazy: false
+  proxies: ["Sirius Provider", "X8 Provider"]
+
+- name: "YouTube"
+  type: fallback
+  url: http://www.gstatic.com/generate_204
+  interval: 30
+  timeout: 5000
+  lazy: false
+  proxies:
+  - "[Sirius] YouTube🍿"
+  - "Sirius Provider"
+  - "X8 Provider"
+
+- name: "Messengers"
+  type: fallback
+  url: http://www.gstatic.com/generate_204
+  interval: 30
+  timeout: 5000
+  lazy: false
+  proxies:
+  - "[Sirius] 🟢 WhatsApp"
+  - "Sirius Provider"
+  - "X8 Provider"
+
+rules:
+# Local networks
+- IP-CIDR,192.168.0.0/16,DIRECT
+- IP-CIDR,10.0.0.0/8,DIRECT
+
+# === GEOSITE rules (from custom geosite.dat) ===
+- GEOSITE,youtube,YouTube
+- GEOSITE,instagram,Proxy
+- GEOSITE,facebook,Proxy
+- GEOSITE,twitter,Proxy
+- GEOSITE,netflix,Proxy
+- GEOSITE,soundcloud,Proxy
+- GEOSITE,kinopub,Proxy
+- GEOSITE,category-ai-!cn,Proxy
+
+# === Telegram & WhatsApp (IP-CIDR + domains, no geosite yet) ===
+# Telegram IP ranges
+- IP-CIDR,91.108.0.0/16,Messengers
+- IP-CIDR,149.154.160.0/20,Messengers
+- IP-CIDR,5.28.192.0/18,Messengers
+# Telegram domains
+- DOMAIN-SUFFIX,telegram.org,Messengers
+- DOMAIN-SUFFIX,t.me,Messengers
+- DOMAIN-SUFFIX,telegram.me,Messengers
+- DOMAIN-SUFFIX,telesco.pe,Messengers
+# WhatsApp IP ranges
+- IP-CIDR,157.240.0.0/16,Messengers
+- IP-CIDR,31.13.24.0/21,Messengers
+- IP-CIDR,31.13.64.0/18,Messengers
+# WhatsApp domains
+- DOMAIN-SUFFIX,whatsapp.com,Messengers
+- DOMAIN-SUFFIX,whatsapp.net,Messengers
+
+# === DOMAIN-SUFFIX (no category in geosite) ===
+- DOMAIN-SUFFIX,speedtest.net,Proxy
+- DOMAIN-SUFFIX,rutracker.org,Proxy
+- DOMAIN-SUFFIX,t-ru.org,Proxy
+- DOMAIN-SUFFIX,lol,Proxy
+- DOMAIN-SUFFIX,cdn32.lol,Proxy
+
+# Default
+- MATCH,DIRECT
