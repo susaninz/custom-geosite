@@ -5,7 +5,7 @@ on:
   # Каждый день в 03:00 UTC
   schedule:
     - cron: '0 3 * * *'
-  
+
   # Вручную через GitHub UI
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@ on:
         description: 'Force build even if no changes'
         required: false
         default: 'false'
-  
+
   # При push в main (для тестирования)
   push:
     branches:
@@ -21,10 +21,11 @@ on:
     paths:
       - '.github/workflows/build-geosite.yml'
       - 'custom-data/**'
+      - 'scripts/build_srs.py'
 
 env:
   # Категории для включения в geosite.dat
-  # 
+  #
   # cn - минимальная заглушка (1 домен) для совместимости с Mihomo
   # Mihomo проверяет наличие категории "cn" при загрузке geosite.dat
   # Без неё файл считается invalid и удаляется
@@ -43,47 +44,50 @@ env:
     telegram
     whatsapp
 
+  # sing-box version for .srs compilation (match router version)
+  SINGBOX_VERSION: "1.13.2"
+
 jobs:
   check-and-build:
     runs-on: ubuntu-latest
-    
+
     permissions:
       contents: write  # Для создания releases
-    
+
     steps:
       - name: 📥 Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: 🔍 Check domain-list-community updates
         id: check_updates
         run: |
           echo "Checking for updates..."
-          
+
           # Получаем последний commit domain-list-community
           LATEST_COMMIT=$(curl -s https://api.github.com/repos/v2fly/domain-list-community/commits/master | jq -r '.sha')
           echo "Latest commit: $LATEST_COMMIT"
           echo "latest_commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
-          
+
           # Получаем последний GEOSITE релиз (теги v*.*.*)
           # Важно: не использовать /releases/latest, т.к. он вернёт vpn-config релиз
           # Фильтруем по regex v\d+.\d+ чтобы исключить vpn-config-X
           LAST_RELEASE=$(curl -s "https://api.github.com/repos/${{ github.repository }}/releases" | jq -r '[.[] | select(.tag_name | test("^v\\d+\\.\\d+"))][0].tag_name // empty')
-          
+
           if [ -z "$LAST_RELEASE" ]; then
             echo "No previous releases found, building first version"
             echo "should_build=true" >> $GITHUB_OUTPUT
             echo "version=v1.0.0" >> $GITHUB_OUTPUT
           else
             echo "Last release: $LAST_RELEASE"
-            
+
             # Извлекаем commit из тега релиза (формат: v1.0.0-commit-abc123)
             SAVED_COMMIT=$(echo $LAST_RELEASE | grep -oP '(?<=commit-)[a-f0-9]+' || echo "")
             echo "Saved commit: $SAVED_COMMIT"
-            
+
             if [ "$LATEST_COMMIT" != "$SAVED_COMMIT" ] || [ "${{ github.event.inputs.force_build }}" == "true" ]; then
               echo "Changes detected or force build, proceeding with build"
               echo "should_build=true" >> $GITHUB_OUTPUT
-              
+
               # Инкрементируем версию
               CURRENT_VERSION=$(echo $LAST_RELEASE | grep -oP 'v\d+\.\d+\.\d+')
               NEW_VERSION=$(echo $CURRENT_VERSION | awk -F. -v OFS=. '{$NF++;print}')
@@ -93,13 +97,13 @@ jobs:
               echo "should_build=false" >> $GITHUB_OUTPUT
             fi
           fi
-      
+
       - name: 🛠️ Setup Go
         if: steps.check_updates.outputs.should_build == 'true'
         uses: actions/setup-go@v5
         with:
           go-version: '1.21'
-      
+
       - name: 📦 Clone domain-list-community
         if: steps.check_updates.outputs.should_build == 'true'
         run: |
@@ -108,38 +112,38 @@ jobs:
           cd domain-list-community
           echo "Repository size:"
           du -sh .
-      
+
       - name: 🔧 Apply custom cn stub
         if: steps.check_updates.outputs.should_build == 'true'
         run: |
           echo "Applying custom cn stub for Mihomo compatibility..."
-          
+
           # Заменяем оригинальный cn (который include:tld-cn + geolocation-cn = 1600+ доменов)
           # на нашу минимальную заглушку (1 домен)
           cp custom-data/cn domain-list-community/data/cn
-          
+
           echo "✓ Custom cn stub applied"
           echo "Content:"
           cat domain-list-community/data/cn
-      
+
       - name: ✂️ Extract dependencies
         if: steps.check_updates.outputs.should_build == 'true'
         run: |
           cd domain-list-community
-          
+
           # Отключаем history expansion для корректной работы с файлами содержащими !
           set +H
-          
+
           echo "Finding all dependencies..."
-          
+
           # Создаём список всех нужных файлов (включая зависимости)
           NEEDED_FILES=$(mktemp)
-          
+
           # Наши основные категории
           for cat in ${{ env.GEOSITE_CATEGORIES }}; do
             echo "$cat" >> $NEEDED_FILES
           done
-          
+
           # Находим зависимости (несколько проходов для рекурсивных include)
           for pass in 1 2 3; do
             while IFS= read -r file; do
@@ -150,13 +154,13 @@ jobs:
             done < $NEEDED_FILES
             sort -u $NEEDED_FILES -o $NEEDED_FILES
           done
-          
+
           # Удаляем дубликаты
           sort -u $NEEDED_FILES -o $NEEDED_FILES
-          
+
           echo "📦 Files to copy:"
           cat $NEEDED_FILES
-          
+
           # Копируем только нужные файлы
           mkdir -p data-filtered
           while IFS= read -r file; do
@@ -167,99 +171,148 @@ jobs:
               echo "  ⚠️  $file not found"
             fi
           done < $NEEDED_FILES
-          
+
           echo ""
           echo "Total files: $(ls data-filtered/ | wc -l)"
-          
+
           # Заменяем data
           rm -rf data
           mv data-filtered data
-      
+
       - name: 🔨 Build geosite.dat
         if: steps.check_updates.outputs.should_build == 'true'
         run: |
           cd domain-list-community
-          
+
           echo "Building geosite.dat..."
           go run ./ --outputdir=../build
-          
+
           echo "Build complete!"
           ls -lh ../build/
-          
+
           # domain-list-community создаёт файл dlc.dat, переименовываем в geosite.dat
           if [ -f ../build/dlc.dat ]; then
             mv ../build/dlc.dat ../build/geosite.dat
             echo "✓ Renamed dlc.dat to geosite.dat"
           fi
-          
+
           # Проверяем размер
           SIZE=$(du -h ../build/geosite.dat | cut -f1)
           echo "Final size: $SIZE"
-          
+
           # Проверяем что файл создан и не пустой
           if [ ! -f ../build/geosite.dat ]; then
             echo "Error: geosite.dat not created"
             exit 1
           fi
-          
+
           FILE_SIZE=$(stat -c%s ../build/geosite.dat)
           if [ $FILE_SIZE -lt 10000 ]; then
             echo "Error: geosite.dat is too small ($FILE_SIZE bytes)"
             exit 1
           fi
-          
+
           echo "✓ Validation passed"
           echo "file_size=$SIZE" >> $GITHUB_ENV
-      
+
+      - name: 📦 Install sing-box
+        if: steps.check_updates.outputs.should_build == 'true'
+        run: |
+          echo "Installing sing-box ${SINGBOX_VERSION} for .srs compilation..."
+          curl -sL "https://github.com/SagerNet/sing-box/releases/download/v${SINGBOX_VERSION}/sing-box-${SINGBOX_VERSION}-linux-amd64.tar.gz" -o /tmp/singbox.tar.gz
+          tar xzf /tmp/singbox.tar.gz -C /tmp/
+          mv /tmp/sing-box-${SINGBOX_VERSION}-linux-amd64/sing-box /usr/local/bin/
+          chmod +x /usr/local/bin/sing-box
+          sing-box version
+
+      - name: 🔄 Build .srs rule-sets for sing-box
+        if: steps.check_updates.outputs.should_build == 'true'
+        run: |
+          set +H
+          mkdir -p build/srs
+
+          # Generate JSON source files from domain-list-community data
+          python3 scripts/build_srs.py \
+            --data-dir domain-list-community/data \
+            --output-dir build/srs \
+            youtube instagram facebook twitter netflix \
+            soundcloud kinopub telegram whatsapp \
+            "category-ai-!cn:ai"
+
+          # Compile each JSON source to binary .srs
+          for json_file in build/srs/geosite-*.json; do
+            srs_file="${json_file%.json}.srs"
+            sing-box rule-set compile "$json_file" -o "$srs_file"
+            echo "  Compiled: $(basename "$srs_file") ($(stat -c%s "$srs_file") bytes)"
+          done
+
+          echo ""
+          echo "=== .srs files ==="
+          ls -lh build/srs/*.srs
+
+          # Total size check (must be small for 245MB router)
+          TOTAL_SRS=$(du -ch build/srs/*.srs | tail -1 | cut -f1)
+          echo "Total .srs size: $TOTAL_SRS"
+          echo "srs_total_size=$TOTAL_SRS" >> $GITHUB_ENV
+
+          # Sanity check: no single .srs should exceed 100KB
+          for f in build/srs/*.srs; do
+            fsize=$(stat -c%s "$f")
+            if [ "$fsize" -gt 102400 ]; then
+              echo "WARNING: $(basename "$f") is ${fsize} bytes (>100KB) — may be too large for router"
+            fi
+          done
+
       - name: 📝 Generate release notes
         if: steps.check_updates.outputs.should_build == 'true'
         run: |
-          cat > release_notes.md << EOF
-          # 🎉 Custom Geosite Release ${{ steps.check_updates.outputs.version }}
-          
-          ## 📦 Build Info
-          
-          - **Size:** ${{ env.file_size }}
+          cat > release_notes.md << 'NOTES_EOF'
+          # Custom Geosite Release ${{ steps.check_updates.outputs.version }}
+
+          ## Build Info
+
+          - **geosite.dat size:** ${{ env.file_size }}
+          - **Total .srs size:** ${{ env.srs_total_size }}
           - **Categories:** $(echo "${{ env.GEOSITE_CATEGORIES }}" | wc -w) included
-          - **Source Commit:** \`${{ steps.check_updates.outputs.latest_commit }}\`
+          - **Source Commit:** `${{ steps.check_updates.outputs.latest_commit }}`
           - **Build Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')
-          
-          ## 📋 Included Categories
-          
+
+          ## Files
+
+          | File | Format | Used by |
+          |------|--------|---------|
+          | `geosite.dat` | v2ray dat | Mihomo / OpenClash |
+          | `geosite-*.srs` | sing-box binary rule-set | sing-box |
+
+          ## Included Categories
+
           $(echo "${{ env.GEOSITE_CATEGORIES }}" | tr ' ' '\n' | sed 's/^/- /')
-          
-          ## ⚠️ Note about "cn" category
-          
-          The "cn" category is a **minimal stub** (1 placeholder domain) for Mihomo compatibility.
-          Mihomo validates geosite.dat by checking if "cn" exists. Without it, the file is deleted.
-          This stub does NOT include real Chinese domains to save router RAM.
-          
-          ## 🚀 How to Use
-          
-          ### OpenClash
-          
-          1. Download \`geosite.dat\` from this release
-          2. Upload to \`/etc/openclash/\` on your router
-          3. Restart OpenClash
-          
-          ### Manual Download
-          
-          \`\`\`bash
-          wget https://github.com/${{ github.repository }}/releases/download/${{ steps.check_updates.outputs.version }}-commit-${{ steps.check_updates.outputs.latest_commit }}/geosite.dat
-          \`\`\`
-          
-          ## 🔄 Auto-Update
-          
-          OpenClash can auto-update from GitHub releases. Configure in OpenClash settings.
-          
-          ---
-          
-          **Built with ❤️ by [GitHub Actions](https://github.com/${{ github.repository }}/actions)**
-          EOF
-          
+
+          ## sing-box Usage
+
+          ```json
+          {
+            "route": {
+              "rule_set": [
+                {
+                  "tag": "geosite-youtube",
+                  "type": "remote",
+                  "format": "binary",
+                  "url": "https://github.com/${{ github.repository }}/releases/download/latest/geosite-youtube.srs",
+                  "download_detour": "direct",
+                  "update_interval": "1d"
+                }
+              ]
+            }
+          }
+          ```
+
+          **Note:** `cn` category is a minimal stub for Mihomo compatibility (not included in .srs).
+          NOTES_EOF
+
           cat release_notes.md
-      
-      - name: 🏷️ Create Release
+
+      - name: 🏷️ Create Versioned Release
         if: steps.check_updates.outputs.should_build == 'true'
         uses: softprops/action-gh-release@v1
         with:
@@ -268,11 +321,36 @@ jobs:
           body_path: release_notes.md
           files: |
             build/geosite.dat
+            build/srs/*.srs
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
+      - name: 🏷️ Update latest release (stable URLs for sing-box)
+        if: steps.check_updates.outputs.should_build == 'true'
+        run: |
+          # Delete existing latest release if it exists
+          gh release delete latest --yes 2>/dev/null || true
+          git push origin :refs/tags/latest 2>/dev/null || true
+
+          # Create new latest release with all assets
+          gh release create latest \
+            --title "Latest Custom Geosite" \
+            --notes "Stable download URLs for sing-box rule_set and OpenClash geosite.dat.
+
+          Version: ${{ steps.check_updates.outputs.version }}
+          Updated: $(date -u '+%Y-%m-%d %H:%M:%S UTC')
+
+          **geosite.dat** — for Mihomo/OpenClash
+          **geosite-*.srs** — for sing-box rule-set (remote type)
+
+          URL pattern: \`https://github.com/${{ github.repository }}/releases/download/latest/geosite-{category}.srs\`
+          Categories: youtube, instagram, facebook, twitter, netflix, soundcloud, kinopub, telegram, whatsapp, ai" \
+            build/geosite.dat build/srs/*.srs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: 📱 Notify Telegram (Success)
         if: steps.check_updates.outputs.should_build == 'true' && success()
         run: |
@@ -283,10 +361,11 @@ jobs:
               "version": "${{ steps.check_updates.outputs.version }}",
               "commit": "${{ steps.check_updates.outputs.latest_commit }}",
               "size": "${{ env.file_size }}",
+              "srs_size": "${{ env.srs_total_size }}",
               "status": "success",
               "url": "https://github.com/${{ github.repository }}/releases/tag/${{ steps.check_updates.outputs.version }}-commit-${{ steps.check_updates.outputs.latest_commit }}"
             }'
-      
+
       - name: 📱 Notify Telegram (Failure)
         if: steps.check_updates.outputs.should_build == 'true' && failure()
         run: |
@@ -299,19 +378,25 @@ jobs:
               "status": "failed",
               "error": "Build failed, check logs"
             }'
-      
+
       - name: ✅ Build Summary
         if: steps.check_updates.outputs.should_build == 'true'
         run: |
-          echo "### 🎉 Build Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Version:** ${{ steps.check_updates.outputs.version }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Size:** ${{ env.file_size }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **geosite.dat:** ${{ env.file_size }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total .srs:** ${{ env.srs_total_size }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Categories:** $(echo "${{ env.GEOSITE_CATEGORIES }}" | wc -w)" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit:** \`${{ steps.check_updates.outputs.latest_commit }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "[📦 View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.check_updates.outputs.version }}-commit-${{ steps.check_updates.outputs.latest_commit }})" >> $GITHUB_STEP_SUMMARY
-      
+          echo ".srs files:" >> $GITHUB_STEP_SUMMARY
+          for f in build/srs/*.srs; do
+            echo "- \`$(basename "$f")\` ($(stat -c%s "$f") bytes)" >> $GITHUB_STEP_SUMMARY
+          done
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View Release](https://github.com/${{ github.repository }}/releases/tag/${{ steps.check_updates.outputs.version }}-commit-${{ steps.check_updates.outputs.latest_commit }})" >> $GITHUB_STEP_SUMMARY
+
       - name: ℹ️ No Build Needed
         if: steps.check_updates.outputs.should_build == 'false'
         run: |
